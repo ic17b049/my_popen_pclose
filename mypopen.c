@@ -6,7 +6,38 @@
 #include <errno.h>
 #include <string.h>
 
-// 7 8 10 11 18 19 21 23-30
+
+// 0	OK
+// 1	OK
+// 2	OK
+// 3	OK
+// 4	OK
+// 5	OK
+// 6	OK
+// 7
+// 8
+// 9	OK
+// 10
+// 11
+// 12	OK
+// 13	OK
+// 14	OK
+// 15	OK
+// 16	OK
+// 17 	OK
+// 18
+// 19
+// 20	OK
+// 21
+// 22	OK
+// 23
+// 24
+// 25 
+// 26
+// 27
+// 28
+// 29
+// 30
 
 static pid_t pid = -1;
 static int popenrunning = 0;
