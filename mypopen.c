@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <string.h>
 
+// 7 8 10 11 18 19 21 23-30
+
 static pid_t pid = -1;
 static int popenrunning = 0;
 FILE *retpointer = NULL;
@@ -44,7 +46,14 @@ FILE *mypopen(const char *command, const char *type){
 	pipe(pipefd);
 	
     pid = fork();
-
+	
+	if(pid == -1){
+		close(pipefd[PIPE_FD_READ]);
+        close(pipefd[PIPE_FD_WRITE]);
+		errno = EAGAIN;
+		return NULL;
+	}
+		
 	if(pid == 0){
 		//child
 		if(type[0] == 'r') {
@@ -60,9 +69,6 @@ FILE *mypopen(const char *command, const char *type){
 		execl("/bin/sh", "sh", "-c", command, (char*) NULL);
 		
 	}else{
-		//int statusPtr;
-		
-		//pid = wait(&statusPtr);
 		if(type[0] == 'r') {
 			close(pipefd[PIPE_FD_WRITE]);
 			retpointer =  fdopen(pipefd[PIPE_FD_READ], "r");
@@ -72,11 +78,22 @@ FILE *mypopen(const char *command, const char *type){
 			retpointer =  fdopen(pipefd[PIPE_FD_WRITE], "w");
 		}
 	}
+
+	if(retpointer == NULL){
+		pid = -1;
+		popenrunning = 0;
+		
+		if(type[0] == 'r') close(pipefd[PIPE_FD_READ]);
+		else if(type[0] == 'w') close(pipefd[PIPE_FD_WRITE]);
+	
+		else return NULL;
+	}
 	return retpointer;
 	 
 }
 
 int mypclose(FILE *stream){
+	
 	if (pid == -1){
 		errno = ECHILD;
 		return -1;
@@ -87,5 +104,23 @@ int mypclose(FILE *stream){
 		return -1;		
 	}
 	
-	return fclose(stream);
+	
+	int status;
+    pid_t wait_pid = wait(&status);
+	
+	//reset Vars.
+	popenrunning = 0;
+	pid = -1;
+	
+    if (wait_pid == -1){
+        errno = ECHILD;
+        return -1;
+    }
+
+    if (WIFEXITED(status)) {
+       return WEXITSTATUS(status);
+	}else{
+	errno = ECHILD;
+    return -1;		   
+	}
 }
