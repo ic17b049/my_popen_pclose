@@ -3,25 +3,49 @@
 #include "mypopen.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <string.h>
 
-
-
-
+static pid_t pid = -1;
+static int popenrunning = 0;
+FILE *retpointer = NULL;
+	
 enum { PIPE_FD_READ, PIPE_FD_WRITE};
-
 FILE *mypopen(const char *command, const char *type){
 	
+	
+	if(type == NULL){
+		errno = EINVAL;
+		return NULL;
+	}
+	
+	if(strlen(type) != 1){
+		errno = EINVAL;
+		return NULL;		
+	}
+	
+	if(type[0] != 'r' && type[0] != 'w' ){
+		errno = EINVAL;
+		return NULL;
+	}	
+	
+	
+	if(popenrunning == 1){
+		errno = EAGAIN;
+		return NULL;
+	}else{
+		popenrunning = 1;
+	}
+	
+	
 	int pipefd[2];
+
+	
 	pipe(pipefd);
 	
-	//pipefd[0] Read
-	//pipefd[1] Write
-
-    pid_t pid = fork();
+    pid = fork();
 
 	if(pid == 0){
-		
-		sleep(1);
 		//child
 		if(type[0] == 'r') {
 			close(STDOUT_FILENO);
@@ -33,29 +57,35 @@ FILE *mypopen(const char *command, const char *type){
 			close(pipefd[PIPE_FD_WRITE]);
 			dup2(pipefd[PIPE_FD_READ] , STDIN_FILENO );
 		}
-		
-		execl("/bin/sh", "sh", "-c", "ls -l", (char*) NULL);
+		execl("/bin/sh", "sh", "-c", command, (char*) NULL);
 		
 	}else{
-		char buf;
-		int statusPtr;
+		//int statusPtr;
 		
-		pid = wait(&statusPtr);
-		printf("child finished\n");
-		printf("ParentPrint\n");
+		//pid = wait(&statusPtr);
 		if(type[0] == 'r') {
 			close(pipefd[PIPE_FD_WRITE]);
-			while (read(pipefd[PIPE_FD_READ], &buf, 1) > 0)
-                   printf("%c",buf);
+			retpointer =  fdopen(pipefd[PIPE_FD_READ], "r");
 		}
 		if(type[0] == 'w'){
-
+			close(pipefd[PIPE_FD_READ]);
+			retpointer =  fdopen(pipefd[PIPE_FD_WRITE], "w");
 		}
-		printf("ParentPrint FIN\n");
 	}
+	return retpointer;
 	 
 }
 
 int mypclose(FILE *stream){
+	if (pid == -1){
+		errno = ECHILD;
+		return -1;
+	}
 	
+	if(retpointer != stream || retpointer == NULL){
+		errno = EINVAL;
+		return -1;		
+	}
+	
+	return fclose(stream);
 }
