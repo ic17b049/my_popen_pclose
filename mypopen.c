@@ -154,7 +154,7 @@ int mypclose(FILE *stream){
 		//reset vars.
 		pid = -1;
 		retpointer = NULL;
-
+		// errno already set by fclose
 		return -1;
 	}
 	
