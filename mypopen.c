@@ -34,7 +34,7 @@ static pid_t pid = -1;
 /**
  * a global variable containing the pipe stream pointer initiated by mypopen
  */
-FILE *retpointer = NULL;
+static FILE *retpointer = NULL;
 	
 enum { PIPE_FD_READ, PIPE_FD_WRITE};
 
