@@ -107,30 +107,42 @@ FILE *mypopen(const char *command, const char *type){
 	}
 		
 	if(pid == 0){
-		//child
-		if(type[0] == 'r') {
+		//child		
 			
-			int dupret = dup2(pipefd[PIPE_FD_WRITE], STDOUT_FILENO);
-			if(dupret == -1){
+		if(type[0] == 'r')
+		{
+			close(pipefd[PIPE_FD_READ]);
+			//mypopentest24/25
+			if(pipefd[PIPE_FD_WRITE] != STDOUT_FILENO)
+			{
+				if(dup2(pipefd[PIPE_FD_WRITE], STDOUT_FILENO) == -1)
+				{
+					close(pipefd[PIPE_FD_WRITE]);
+					_Exit(EXIT_FAILURE);
+				}
 				close(pipefd[PIPE_FD_WRITE]);
-				exit(EXIT_FAILURE);
 			}
 		}
-		if(type[0] == 'w'){
-			int dupret = dup2(pipefd[PIPE_FD_READ] , STDIN_FILENO );
-			if(dupret == -1){
+		else 
+		{
+			close(pipefd[PIPE_FD_WRITE]);
+			//mypopentest24/25
+			if(pipefd[PIPE_FD_READ] != STDIN_FILENO)
+			{
+				if(dup2(pipefd[PIPE_FD_READ], STDIN_FILENO) == -1)
+				{
+					close(pipefd[PIPE_FD_READ]);
+					_Exit(EXIT_FAILURE);
+				}
 				close(pipefd[PIPE_FD_READ]);
-				exit(EXIT_FAILURE);
 			}
+		}			
 			
-		}
-		
-		close(pipefd[PIPE_FD_READ]);
-		close(pipefd[PIPE_FD_WRITE]);
-		
+			
+			
 		execl("/bin/sh", "sh", "-c", command, (char*) NULL);
 		//reaches only when execl fails
-		exit(EXIT_FAILURE);
+		_Exit(EXIT_FAILURE);
 		
 	}else{
 		if(type[0] == 'r') {
@@ -145,6 +157,7 @@ FILE *mypopen(const char *command, const char *type){
 
 	if(retpointer == NULL){
 		pid = -1;
+		retpointer = NULL;
 		
 		if(type[0] == 'r') close(pipefd[PIPE_FD_READ]);
 		else if(type[0] == 'w') close(pipefd[PIPE_FD_WRITE]);
@@ -167,7 +180,7 @@ int mypclose(FILE *stream){
 		return -1;		
 	}
 	
-	if(fclose(retpointer) == -1){
+	if(fclose(retpointer) == EOF){
 		//reset vars.
 		pid = -1;
 		retpointer = NULL;
@@ -175,26 +188,27 @@ int mypclose(FILE *stream){
 		return -1;
 	}
 	
-	int status;
-	pid_t wait_pid;
+	int status = -1;
+	int wait_pid;
 	do{
 		wait_pid = waitpid(pid, &status,0);
 	}while(wait_pid == -1 && errno == EINTR);
     
 	
-	//reset Vars.
-	pid = -1;
 	
-    if (wait_pid == -1){
-        errno = ECHILD;
-        return -1;
-    }
-
-    if (WIFEXITED(status)) {
-       return WEXITSTATUS(status);
-	}else{
-	errno = ECHILD;
-    return -1;		   
+	
+	if(!(WIFEXITED(status))){
+		errno = ECHILD;
+		return -1;
 	}
+	if(wait_pid == -1){
+		return -1;
+	}
+	
+	//reset Vars.	
+	pid = -1;
+	retpointer = NULL;
+
+	return WEXITSTATUS(status);	
 }
 //------------------------------------eof--------------------------------------------------
