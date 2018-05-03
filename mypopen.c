@@ -1,3 +1,22 @@
+/**
+* @file mypopen.c
+* Betriebssysteme My Popen File
+* Beispiel 2
+*
+* @author Dominic Schebeck 			<ic17b049@technikum-wien.at>
+* @author Thomas  Neugschwandtner 	<ic17b082@technikum-wien.at>
+* @author Dominik Rychly 			<ic17b052@technikum-wien.at>
+*
+* @date 05/03/2018
+*
+* @version 1.0
+*
+*/
+
+/*
+* ------------------------------------------------------includes----------
+*/
+
 #include <unistd.h>
 #include <stdio.h>
 #include "mypopen.h"
@@ -178,3 +197,4 @@ int mypclose(FILE *stream){
     return -1;		   
 	}
 }
+//------------------------------------eof--------------------------------------------------
