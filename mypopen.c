@@ -14,7 +14,7 @@
 */
 
 /*
-* ------------------------------------------------------includes----------
+* -----------------------------------------includes----------------------------------
 */
 
 #include "mypopen.h"
@@ -26,10 +26,26 @@
 #include <string.h>
 #include <stdlib.h>
 
+/**
+ * a global variable containing the process id returned by fork
+ */
 static pid_t pid = -1;
+
+/**
+ * a global variable containing the pipe stream pointer initiated by mypopen
+ */
 FILE *retpointer = NULL;
 	
 enum { PIPE_FD_READ, PIPE_FD_WRITE};
+
+/**
+ * @brief initiate a pipe stream to or from a process
+ *
+ * @param command the command to be executed
+ * @param type the I/O mode (r/w)
+ *
+ * @returns a file pointer or NULL in case of error
+ */
 FILE *mypopen(const char *command, const char *type){
 	
 	
@@ -137,6 +153,13 @@ FILE *mypopen(const char *command, const char *type){
 	 
 }
 
+/**
+ * @brief close a pipe stream to or from a process
+ *
+ * @param stream the stream to be closed
+ *
+ * @returns the exit status of the process or -1 in case of error
+ */
 int mypclose(FILE *stream){
 	
 	if (pid == -1){
