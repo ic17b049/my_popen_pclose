@@ -79,12 +79,13 @@ FILE *mypopen(const char *command, const char *type){
 	}
 
     pid = fork();
-
+	int tmpErrno;
 	switch(pid) {
 		case -1:
+			tmpErrno = errno;
 			close(pipefd[PIPE_FD_READ]);
 			close(pipefd[PIPE_FD_WRITE]);
-			errno = EAGAIN;
+			errno = tmpErrno;
 			return NULL;			
 		break;
 		
